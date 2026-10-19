@@ -1,0 +1,81 @@
+id = "herdr-broadcast"
+name = "Broadcast"
+version = "0.3.0"
+min_herdr_version = "0.9.0"
+description = "Send one prompt to many agents (existing or new, local or over SSH), track every broadcast, and manage SSH machines"
+platforms = ["linux", "macos"]
+
+# Bun runs the TypeScript directly; this only checks that it can be found.
+[[build]]
+command = ["sh", "scripts/with-bun.sh", "--version"]
+
+# The quick picker: broadcasts and their agents, and a quick broadcast, in a popup that closes
+# once an agent is chosen. Bind a key to herdr-broadcast.quick. `open` reads quick_placement
+# from config.toml; this is the placement otherwise.
+[[panes]]
+id = "quick"
+title = "Broadcast"
+placement = "popup"
+width = "80%"
+height = "80%"
+command = ["sh", "scripts/with-bun.sh", "src/main.ts", "tui"]
+
+[[panes]]
+id = "machines"
+title = "SSH machines"
+placement = "zoomed"
+command = ["sh", "scripts/with-bun.sh", "src/main.ts", "tui", "--machines"]
+
+[[actions]]
+id = "quick"
+title = "Broadcast: quick picker"
+contexts = ["workspace"]
+command = ["sh", "scripts/with-bun.sh", "src/main.ts", "open", "quick"]
+
+[[actions]]
+id = "machines"
+title = "Broadcast: SSH machines"
+contexts = ["workspace"]
+command = ["sh", "scripts/with-bun.sh", "src/main.ts", "open", "machines"]
+
+# The broadcast web page (http://127.0.0.1:7318 by default). The startup hook starts it with
+# Herdr; these start and stop it by hand.
+[[actions]]
+id = "web"
+title = "Broadcast: 网页"
+contexts = ["workspace"]
+command = ["sh", "scripts/with-bun.sh", "src/main.ts", "web-start"]
+
+[[actions]]
+id = "web-stop"
+title = "Broadcast: 停止网页"
+contexts = ["workspace"]
+command = ["sh", "scripts/with-bun.sh", "src/main.ts", "web-stop"]
+
+[[actions]]
+id = "web-status"
+title = "Broadcast: 网页状态"
+contexts = ["workspace"]
+command = ["sh", "scripts/with-bun.sh", "src/main.ts", "web-status"]
+
+# Started by the picker and the startup hook: starts new agents and follows remote machines,
+# then exits once no broadcast is pending.
+[[actions]]
+id = "worker"
+title = "Broadcast: run pending broadcasts"
+contexts = ["workspace"]
+command = ["sh", "scripts/with-bun.sh", "src/main.ts", "worker"]
+
+# Local agents move their broadcasts along themselves: an agent that settles gets its next
+# queued prompt, and a finished turn is recorded, with no picker or worker running.
+[[events]]
+on = "pane.agent_status_changed"
+command = ["sh", "scripts/with-bun.sh", "src/main.ts", "hook"]
+
+[[events]]
+on = "pane.exited"
+command = ["sh", "scripts/with-bun.sh", "src/main.ts", "hook"]
+
+# After a server start: picks up broadcasts that were pending when Herdr stopped.
+[[startup]]
+command = ["sh", "scripts/with-bun.sh", "src/main.ts", "hook"]

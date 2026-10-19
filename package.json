@@ -1,0 +1,17 @@
+{
+  "name": "herdr-broadcast",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Herdr plugin: broadcast one prompt to many agents and track each run",
+  "scripts": {
+    "tui": "bun src/main.ts tui",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "typescript": "^5.6.0"
+  },
+  "license": "MIT"
+}
