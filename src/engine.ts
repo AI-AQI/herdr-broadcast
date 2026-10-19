@@ -1,11 +1,11 @@
 /**
- * Drives executions from the dashboard process: starts new agents, sends prompts when their agent
- * is free, and follows each agent's lifecycle until its turn ends.
+ * Drives executions from whichever process runs it (the web server, the worker, an event hook):
+ * starts new agents, sends prompts when their agent is free, and follows each agent's lifecycle
+ * until its turn ends.
  *
- * There is no daemon. Everything an execution needs to resume is in SQLite and Herdr itself, so
- * any open dashboard picks up where another left off; while none is open, agents keep working and
- * the next dashboard catches up. Completion is read from Herdr's `completion_seq`: a completed idle
- * transition numbered after the prompt went in belongs to this execution's turn.
+ * Everything an execution needs to resume is in SQLite and Herdr itself, so any of those
+ * processes picks up where another left off. Completion is read from Herdr's `completion_seq`: a
+ * completed idle transition numbered after the prompt went in belongs to this execution's turn.
  */
 import { ACTIVE_STATES, pidAlive, type Execution, type ExecState, type Store } from "./db.ts";
 import {
@@ -130,8 +130,8 @@ export class Engine {
   private stopped = false;
 
   /**
-   * `startAgents: false` leaves starting new agents to the worker: a picker that closes
-   * mid-start would leave a half-made agent behind.
+   * `startAgents: false` leaves starting new agents to the worker: the web server, which only
+   * shows and sends, must not leave a half-made agent behind when it stops.
    */
   constructor(readonly store: Store, private readonly changed: () => void, timing: Partial<Engine["timing"]> = {}, private readonly options: { startAgents?: boolean } = {}) {
     this.timing = { tickMs: 500, localPollMs: LOCAL_POLL_MS, remotePollMs: REMOTE_POLL_MS, ...timing };
@@ -180,7 +180,7 @@ export class Engine {
     return this.views.get(machineId);
   }
 
-  /** Keeps a machine's agents fresh while a screen shows them (target picker). */
+  /** Keeps a machine's agents fresh while a page shows them. */
   watch(machineId: string): () => void {
     this.watched.set(machineId, (this.watched.get(machineId) ?? 0) + 1);
     this.lastPoll.delete(machineId);

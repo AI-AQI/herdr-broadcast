@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Herdr plugin: broadcast one prompt to many agents and track each run",
   "scripts": {
-    "tui": "bun src/main.ts tui",
+    "web": "bun src/main.ts web",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },

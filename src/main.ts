@@ -1,9 +1,8 @@
 #!/usr/bin/env bun
 /**
- * herdr-broadcast entry point.
+ * herdr-broadcast entry point. The plugin's interface is its web page; these are what the
+ * manifest runs, and a command line for scripts.
  *
- *   tui [--machines]   the quick picker, or the SSH machines page (what the plugin panes run)
- *   open [quick|machines]   open one as a Herdr pane, placed as config.toml says (the actions)
  *   worker             start new agents and follow remote machines until nothing is left (an action)
  *   web                the broadcast web page's server, in the foreground
  *   web-start/web-stop start it detached (the startup hook and an action) / stop it
@@ -15,49 +14,19 @@
 import { join } from "node:path";
 import { loadConfig } from "./config.ts";
 import { Store, type NewExecution } from "./db.ts";
-import { Engine } from "./engine.ts";
-import { agentGet, HerdrError, LOCAL, machineList, pluginPaneOpen } from "./herdr.ts";
-import { App } from "./tui/app.ts";
-import { MachinesScreen } from "./tui/screens/machines.ts";
-import { QuickRoot } from "./tui/screens/quick.ts";
-import { kickWorker, PLUGIN_ID, runHook, runWorker } from "./worker.ts";
+import { agentGet, HerdrError, LOCAL, machineList } from "./herdr.ts";
+import { kickWorker, runHook, runWorker } from "./worker.ts";
 import { runWeb, startWebDetached, stateDir, stopWeb, webStatus } from "./web/launch.ts";
 
 const USAGE = `usage:
-  main.ts tui [--machines]
-  main.ts open [quick|machines]
+  main.ts web | web-start | web-stop | web-status
   main.ts worker
-  main.ts web | web-start | web-stop
   main.ts hook
   main.ts list
   main.ts send --prompt TEXT [--title TEXT] [--to [MACHINE/]PANE]... [--new [MACHINE/]KIND@DIR[*COUNT]]...
       --to     an agent already running, e.g. --to w2:p1 or --to gpu-box/w1:p3
       --new    agents to start, e.g. --new claude@~/src/app*2 or --new gpu-box/codex@~/repo
       MACHINE is a saved machine's id or label; without one it is this machine.`;
-
-async function tui(args: string[]): Promise<void> {
-  if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    console.error("herdr-broadcast: the picker needs a terminal");
-    process.exit(2);
-  }
-  const store = new Store();
-  let app: App | null = null;
-  // new agents are the worker's: a picker closed mid-start would leave a half-made one
-  const engine = new Engine(store, () => app?.redraw(), {}, { startAgents: false });
-  app = new App(store, engine);
-  engine.start();
-  app.brand = false;
-  // the SSH machines page opens on its own; anything else is the picker
-  const done = app.run(args.includes("--machines") ? new MachinesScreen(app) : new QuickRoot(app));
-  const exit = () => app?.quit();
-  process.on("SIGTERM", exit);
-  process.on("SIGHUP", exit);
-  await done;
-  engine.stop();
-  await engine.settle();
-  store.close();
-  process.exit(0);
-}
 
 function list(): void {
   const store = new Store();
@@ -115,19 +84,9 @@ async function send(args: string[]): Promise<void> {
   store.close();
 }
 
-const [command = "tui", ...rest] = process.argv.slice(2);
+const [command = "", ...rest] = process.argv.slice(2);
 try {
   switch (command) {
-    case "tui":
-      await tui(rest);
-      break;
-    case "open": {
-      const { placement, quickPlacement } = loadConfig();
-      const page = rest[0] === "machines" ? "machines" : "quick";
-      // passed on as printed: herdr-web-ui finds the opened pane in this output and shows it
-      process.stdout.write(await pluginPaneOpen(PLUGIN_ID, page, (page === "quick" ? quickPlacement : placement) ?? undefined));
-      break;
-    }
     case "worker": {
       const store = new Store();
       await runWorker(store);

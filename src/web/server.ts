@@ -17,8 +17,8 @@ import { pidAlive, type Execution, type NewExecution, type Store } from "../db.t
 import { Engine, READY, resolveCwd, type Machine } from "../engine.ts";
 import { agentRead, herdrJson, LOCAL } from "../herdr.ts";
 import { isDir, listDirs } from "./dirs.ts";
-import { sanitizeKeepStyle } from "../tui/text.ts";
-import { AGENT_KINDS, validCwd } from "../tui/draft.ts";
+import { sanitizeKeepStyle } from "../text.ts";
+import { AGENT_KINDS, validCwd } from "../agents.ts";
 import { DEFAULT_WEB_URL, webLinkQuery } from "../weblink.ts";
 import { kickWorker } from "../worker.ts";
 

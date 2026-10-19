@@ -2,7 +2,7 @@
  * Broadcasts and their executions, in SQLite under the plugin's state directory.
  *
  * A broadcast is one prompt sent to several agents; an execution is that prompt in one agent.
- * Several dashboards may be open at once (the TUI, the same pane in a browser, a second tab),
+ * Several processes may work on it at once (the web server, the worker, event hooks),
  * so every step that writes to an agent is claimed with a conditional UPDATE first.
  */
 import { Database } from "bun:sqlite";

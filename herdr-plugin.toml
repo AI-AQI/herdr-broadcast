@@ -2,41 +2,12 @@ id = "herdr-broadcast"
 name = "Broadcast"
 version = "0.3.0"
 min_herdr_version = "0.9.0"
-description = "Send one prompt to many agents (existing or new, local or over SSH), track every broadcast, and manage SSH machines"
+description = "Send one prompt to many agents (existing or new, local or over SSH) from a web page, and watch every agent's screen as it works"
 platforms = ["linux", "macos"]
 
 # Bun runs the TypeScript directly; this only checks that it can be found.
 [[build]]
 command = ["sh", "scripts/with-bun.sh", "--version"]
-
-# The quick picker: broadcasts and their agents, and a quick broadcast, in a popup that closes
-# once an agent is chosen. Bind a key to herdr-broadcast.quick. `open` reads quick_placement
-# from config.toml; this is the placement otherwise.
-[[panes]]
-id = "quick"
-title = "Broadcast"
-placement = "popup"
-width = "80%"
-height = "80%"
-command = ["sh", "scripts/with-bun.sh", "src/main.ts", "tui"]
-
-[[panes]]
-id = "machines"
-title = "SSH machines"
-placement = "zoomed"
-command = ["sh", "scripts/with-bun.sh", "src/main.ts", "tui", "--machines"]
-
-[[actions]]
-id = "quick"
-title = "Broadcast: quick picker"
-contexts = ["workspace"]
-command = ["sh", "scripts/with-bun.sh", "src/main.ts", "open", "quick"]
-
-[[actions]]
-id = "machines"
-title = "Broadcast: SSH machines"
-contexts = ["workspace"]
-command = ["sh", "scripts/with-bun.sh", "src/main.ts", "open", "machines"]
 
 # The broadcast web page (http://127.0.0.1:7318 by default). The startup hook starts it with
 # Herdr; these start and stop it by hand.

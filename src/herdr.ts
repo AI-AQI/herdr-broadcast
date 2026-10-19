@@ -249,7 +249,7 @@ export async function machineList(): Promise<MachineProfile[]> {
   });
 }
 
-/** `herdr machine status --json`: kept as parsed JSON, the TUI shows what it says. */
+/** `herdr machine status --json`: kept as parsed JSON, the page shows what it says. */
 export async function machineStatus(id?: string): Promise<unknown> {
   return herdrJson(["machine", "status", ...(id ? [id] : []), "--json"], { timeoutMs: 45_000 });
 }

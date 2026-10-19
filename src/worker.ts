@@ -1,12 +1,12 @@
 /**
- * Everything that has to keep going while no picker is open.
+ * Everything that has to keep going while no web page is open.
  *
  * - The worker is a plugin action process: it starts new agents, follows remote machines (their
  *   agent events fire on that machine's Herdr, where this plugin is not installed), and exits
  *   once nothing is left to do. One runs at a time, held by a lock in the database.
  * - The event hook runs once per local agent status change: when the pane carries a broadcast
  *   execution it reads the agents, sends what is due and records what finished, then exits.
- *   A local broadcast moves along even with no worker and no picker running.
+ *   A local broadcast moves along even with no worker and no page open.
  */
 import { pidAlive, type Store } from "./db.ts";
 import { Engine } from "./engine.ts";

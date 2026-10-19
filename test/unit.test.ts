@@ -1,11 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { KeyParser } from "../src/tui/keys.ts";
-import { TextArea, TextInput } from "../src/tui/input.ts";
-import { pad, sanitizeKeepStyle, truncate, width, wrap } from "../src/tui/text.ts";
+import { sanitizeKeepStyle } from "../src/text.ts";
 import { slugOf, webLink, webMachineId } from "../src/weblink.ts";
 import { agentNameFor, resolveCwd, shapePrompt, tabLabelFor, workspaceLabelFor } from "../src/engine.ts";
 import { defaultDbPath, sessionName, Store } from "../src/db.ts";
-import { matchScore } from "../src/tui/screens/picker.ts";
 import { listDirs } from "../src/web/dirs.ts";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -33,58 +30,11 @@ describe("folders for the form", () => {
   });
 });
 
-describe("keys", () => {
-  test("arrows, enter, tab, ctrl, alt+enter, escape", () => {
-    const keys = new KeyParser().feed("\x1b[A\x1b[B\r\t\x0f\x1b\r\x1b");
-    expect(keys.map((k) => k.name)).toEqual(["up", "down", "enter", "tab", "o", "newline", "escape"]);
-    expect(keys[4]!.ctrl).toBe(true);
-  });
-
-  test("CJK text arrives as characters", () => {
-    const keys = new KeyParser().feed("检查a");
-    expect(keys.map((k) => k.text)).toEqual(["检", "查", "a"]);
-  });
-
-  test("a bracketed paste spanning reads is one key with its newlines", () => {
-    const parser = new KeyParser();
-    expect(parser.feed("\x1b[200~line one\r\nli")).toEqual([]);
-    expect(parser.feed("ne two\x1b[201~x")).toEqual([{ name: "paste", text: "line one\nline two" }, { name: "char", text: "x" }]);
-  });
-});
-
 describe("text", () => {
   test("a screen keeps its colors and styles, and loses everything that would move a cursor", () => {
     const styled = "\x1b[1;38;2;215;119;87m✻ Claude\x1b[0m \x1b[38;5;244mready\x1b[39m";
     expect(sanitizeKeepStyle(styled)).toBe(styled);
     expect(sanitizeKeepStyle("\x1b[2J\x1b[Ha\x1b[?25lb\x1b]0;title\x07c\x1b]8;;https://x\x1b\\link\x1b]8;;\x1b\\\r\nd\x1b(B\x1b7e")).toBe("abclink\nde");
-  });
-
-  test("CJK is two cells wide", () => {
-    expect(width("广播")).toBe(4);
-    expect(truncate("广播任务列表", 7)).toBe("广播任…");
-    expect(width(pad("广播", 6))).toBe(6);
-  });
-
-  test("wrap breaks by cells", () => {
-    expect(wrap("abcdef", 4)).toEqual(["abcd", "ef"]);
-    expect(wrap("广播任务", 5)).toEqual(["广播", "任务"]);
-  });
-});
-
-describe("inputs", () => {
-  test("text area edits across lines", () => {
-    const area = new TextArea("");
-    for (const key of new KeyParser().feed("ab\rcd")) area.key(key);
-    area.key({ name: "backspace" });
-    area.key({ name: "up" });
-    area.key({ name: "char", text: "X" });
-    expect(area.value).toBe("aXb\nc");
-  });
-
-  test("text input keeps one line", () => {
-    const input = new TextInput("a");
-    input.key({ name: "paste", text: "b\nc" });
-    expect(input.value).toBe("ab c");
   });
 });
 
@@ -110,18 +60,6 @@ describe("herdr-web-ui links", () => {
     expect(slugOf("Café API")).toBe("cafe-api");
     expect(slugOf("检查登录")).toBe("");
     expect(slugOf("a very long workspace name that goes on")).toBe("a-very-long-workspace");
-  });
-});
-
-describe("picker filter", () => {
-  test("substrings rank before scattered matches, and non-matches drop out", () => {
-    expect(matchScore("", "anything")).toBe(0);
-    expect(matchScore("#3", "#3 claude · ✓ 已完成 · 修登录 bug")).toBe(0);
-    expect(matchScore("等待", "#3 pi · ? 等待输入")).not.toBeNull();
-    const direct = matchScore("clau", "#3 claude")!;
-    const scattered = matchScore("cde", "#3 claude")!;
-    expect(direct).toBeLessThan(scattered);
-    expect(matchScore("xyz", "#3 claude")).toBeNull();
   });
 });
 
